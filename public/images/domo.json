@@ -1,0 +1,63 @@
+{"frames": {
+
+"walk1.png":
+{
+	"frame": {"x":0,"y":0,"w":42,"h":46},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":42,"h":46},
+	"sourceSize": {"w":42,"h":46}
+},
+"walk2.png":
+{
+	"frame": {"x":42,"y":0,"w":30,"h":46},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":30,"h":46},
+	"sourceSize": {"w":30,"h":46}
+},
+"walk3.png":
+{
+	"frame": {"x":72,"y":0,"w":32,"h":43},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":43},
+	"sourceSize": {"w":32,"h":43}
+},
+"walk4.png":
+{
+	"frame": {"x":0,"y":0,"w":42,"h":46},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":42,"h":46},
+	"sourceSize": {"w":42,"h":46}
+},
+"walk5.png":
+{
+	"frame": {"x":42,"y":0,"w":30,"h":46},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":30,"h":46},
+	"sourceSize": {"w":30,"h":46}
+},
+"walk6.png":
+{
+	"frame": {"x":72,"y":0,"w":32,"h":43},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":43},
+	"sourceSize": {"w":32,"h":43}
+}},
+"animations": {
+	"walk": ["walk1.png","walk2.png","walk3.png", "walk4.png","walk5.png","walk6.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "domo.png",
+	"format": "RGBA8888",
+	"size": {"w":104,"h":46},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:c4b3ed70efb51bb94719c6544a56bf1c:f3ba4ac0b208b12a7cc84c5a54fcf015:54f19f40731b31818bf81d8a899535f9$"
+}
+}

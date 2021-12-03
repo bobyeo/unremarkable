@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "strict": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["node_modules/@types", "src/@types"],
+    "paths": {
+      "mini-signals": ["./node_modules/resource-loader/typings/mini-signals.d.ts"]
+    }
+  },
+  "include": ["./src/**/*" ],
+  "exclude": ["node_modules"]
+}

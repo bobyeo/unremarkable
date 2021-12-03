@@ -1,0 +1,4 @@
+Last left off at:
+Implement "jump"
+
+* install jest and set up a test

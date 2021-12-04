@@ -26,9 +26,9 @@ function setup() {
     const rock2 = terrainId['rock2.png']
     const grass1 = terrainId['grass1.png']
     world = new SideScrollingWorld([rock1, rock2, grass1], [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     ], window, DEFAULT_GRAVITY)
     world.build()
   }

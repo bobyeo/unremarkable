@@ -6,20 +6,15 @@ export class Key {
 
   constructor(
     private key: string,
-    private press: () => void,
-    private release: () => void,
-    private onTick: () => void,
     private window: Window & typeof globalThis,
-    private disableHold: boolean = false) {
-  }
-
-  public tick() {
-    this.onTick()
+    private disableHold: boolean = false,
+    private press?: () => void, // press and release are for function calls that don't happen on a tick
+    private release?: () => void,) {
   }
 
   private downHandler(event: KeyboardEvent) {
     if (event.key === this.key) {
-      if (this.isUp || (this.isDown && !this.disableHold)) {
+      if (this.press && (this.isUp || (this.isDown && !this.disableHold))) {
         this.press()
       }
       this.isDown = true
@@ -30,7 +25,7 @@ export class Key {
 
   private upHandler(event: KeyboardEvent) {
     if (event.key === this.key) {
-      if (this.isDown) {
+      if (this.isDown && this.release) {
         this.release()
       }
       this.isDown = false

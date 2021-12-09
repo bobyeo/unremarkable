@@ -19,8 +19,15 @@ export class ControllablleSprite {
   private down: Key
   private space: Key
   private falling: IFallTracker | undefined
+  private jumping: boolean = false
 
-  constructor(private moveRightTextures: Texture<Resource>[] , private moveLeftTextures: Texture<Resource>[] , private window: Window & typeof globalThis, private stepSize: number = 15){ 
+  constructor(
+    private moveRightTextures: Texture<Resource>[],
+    private moveLeftTextures: Texture<Resource>[],
+    private window: Window & typeof globalThis,
+    private stepSize: number = 15,
+    private jumpSpeed: number = -5
+    ){
     this.sprite = new AnimatedSprite(this.moveRightTextures)
     this.left = new Key('ArrowLeft', this.window)
     this.right = new Key('ArrowRight', this.window)
@@ -30,11 +37,12 @@ export class ControllablleSprite {
     this.listen()
   }
   
-  public tick () {
+  public tick (delta: number) {
     this.rightTick()
     this.leftTick()
     this.downTick()
     this.upTick()
+    this.spaceTick(delta)
   }
   
   public listen () {
@@ -88,26 +96,24 @@ export class ControllablleSprite {
 
 
   private leftTick () {
-    if(this.left.isDown) {
-      this.walkLeft()
-    }
+    this.left.isDown ? this.walkLeft() : this.sprite.stop()
   }
 
   private rightTick () {
-    if(this.right.isDown) {
-      this.walkRight()
-    }
+    this.right.isDown ? this.walkRight() : this.sprite.stop()
   }
 
   private upTick () {
-    if(this.up.isDown) {
-      this.walkUp()
-    }
+    this.up.isDown ?  this.walkUp() : this.sprite.stop()
   }
 
   private downTick () {
-    if(this.down.isDown) {
-      this.walkDown()
+    this.down.isDown ? this.walkDown() : this.sprite.stop
+  }
+
+  private spaceTick (delta: number) {
+    if(this.space.isDown && !this.jumping) {
+      this.handleJump(delta)
     }
   }
 
@@ -119,14 +125,6 @@ export class ControllablleSprite {
     this.sprite.x -= this.stepSize
   }
 
-  private leftDown () {
-    this.walkLeft()
-  }
-
-  private leftUp () {
-    this.sprite.stop()
-  }
-
   private walkRight () {
     if (!this.sprite.playing) {
       this.sprite.textures = this.moveRightTextures
@@ -135,27 +133,11 @@ export class ControllablleSprite {
     this.sprite.x += this.stepSize
   }
  
-  private rightDown () {
-    this.walkRight()
-  }
-
-  private rightUp () {
-    this.sprite.stop()
-  }
-
   private walkUp () {
     if (!this.sprite.playing) {
       this.sprite.play()
     }
     this.sprite.y -= this.stepSize
-  }
-
-  private upDown () {
-    this.walkUp()
-  }
-
-  private upUp () {
-    this.sprite.stop()
   }
 
   private walkDown() {
@@ -165,31 +147,13 @@ export class ControllablleSprite {
     this.moveSpriteDownwards(this.stepSize)
   }
 
-  private handleJump() {
-    // if (!this.airborne) {
-    //   // jump!
-    //   this.airborne = true;
-    //   this.verticalSpeed = -5;
-    // }
+  private handleJump(delta: number) {
+    this.jumping = true;
+    this.jumpSpeed = -5;
+    this.sprite.y += this.jumpSpeed * delta;
   }
 
   private moveSpriteDownwards(steps: number) {
     this.sprite.y += steps
-  }
-
-  private downDown () {
-    this.walkDown()
-  }
-
-  private spaceDown() {
-    this.handleJump()
-  }
-
-  private spaceUp() {
-    // maybe make the jump more or less intense based on time
-  }
-
-  private downUp () {
-    this.sprite.stop()
   }
 }

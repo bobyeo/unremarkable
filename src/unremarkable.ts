@@ -57,7 +57,7 @@ function setup() {
 }
 
 function spriteLoop(delta: number) {
-  world.tick()
+  world.tick(delta)
 }
 
 function autoResize() {

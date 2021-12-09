@@ -1,3 +1,5 @@
+
+export type ControlKey = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | ' '
 export class Key {
   public isDown = false;
   public isUp = true;
@@ -5,7 +7,7 @@ export class Key {
   private upListener = this.upHandler.bind(this)
 
   constructor(
-    private key: string,
+    private key: ControlKey,
     private window: Window & typeof globalThis,
     private disableHold: boolean = false,
     private press?: () => void, // press and release are for function calls that don't happen on a tick

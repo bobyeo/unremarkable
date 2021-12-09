@@ -61,13 +61,12 @@ export class SideScrollingWorld {
     this.animatedSprites.push(sprite)
   }
 
-  public tick() {
+  public tick(delta: number) {
     this.animatedSprites.forEach((sprite: ActionSprite) => {
       this.processSpriteInWorld(sprite)
-      sprite.tick()
+      sprite.tick(delta)
     })
   }
-  // this should grab all the animated sprites and call processSpriteInWorld  with them
 
   public processSpriteInWorld(actionSprite: ActionSprite) {
     const terrainCollisions = this.level.filter((terrain) => {
@@ -75,19 +74,9 @@ export class SideScrollingWorld {
     })
 
     if (terrainCollisions.length === 0) {
-      // const futureFallCollision = this.level.filter((terrrain: TerrainSprite) => {
-      //   const top = terrrain.sprite.y + this.gravity
-      //   const left = terrrain.sprite.x
-      //   const bottom = top - terrrain.sprite.height
-      //   const right = left + terrrain.sprite.width
-      //   const { x, y } = actionSprite.sprite
-      //   return y <= top && y >= bottom && x >= left && x <= right
-      // })
-      // const firstContact = futureFallCollision[0]
-      // const distance = firstContact !== undefined ? (firstContact.sprite.y - actionSprite.sprite.y) : this.gravity
-      actionSprite.fall(1)
-      // TODO: ^^^ this would be multiplied by a decimal viscosity if in a permiable terrain like water or gel
+      // TODO: this would be multiplied by a decimal viscosity if in a permiable terrain like water or gel
       // this would also be cool if the sprite had a "resistance" that could make it fall slower
+      actionSprite.fall(1)
     } else {
       actionSprite.collide(terrainCollisions)
     }

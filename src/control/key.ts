@@ -1,5 +1,5 @@
 
-export type ControlKey = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | ' '
+export type ControlKey = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | ' ' | 'Space'
 export class Key {
   public isDown = false;
   public isUp = true;

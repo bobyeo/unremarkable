@@ -1,4 +1,4 @@
-import { AnimatedSprite, Resource, Texture } from "pixi.js";
+import { Resource, Texture } from "pixi.js";
 import { ActionSprite } from '../sprites/controllableSprite';
 import { TerrainSprite } from "../sprites/terrainSprite";
 import { SpriteUtils } from '../utils/sprite';
@@ -21,8 +21,8 @@ export class SideScrollingWorld {
     this.terrainRowHeight = this.terrainTextures[0].height
   }
 
-  private placeNext(spriteIndex: number) {
-    const nextTerrain = new TerrainSprite(this.terrainTextures[spriteIndex])
+  private placeNext(spriteIndex: number, row: number, column: number) {
+    const nextTerrain = new TerrainSprite(this.terrainTextures[spriteIndex], row, column)
     nextTerrain.sprite.x = this.terrainPlacementCursorX
     nextTerrain.sprite.y = this.terrainPlacementCursorY
     this.level.push(nextTerrain)
@@ -48,10 +48,10 @@ export class SideScrollingWorld {
 
   // [[0,0,0,0,0,0,0],[1,1,1,1,1,1,1]]
   public build() {
-    this.worldMatrix.forEach((row: number[]) => {
+    this.worldMatrix.forEach((row: number[], rowNumber: number) => {
       this.initCursorForRow(this.terrainTextures[row[0]])
-      row.forEach((textureIndex: number) => {
-        const nextTerrain = this.placeNext(textureIndex)
+      row.forEach((textureIndex: number, colNumber: number) => {
+        const nextTerrain = this.placeNext(textureIndex, rowNumber, colNumber)
         this.updateCursorForColumn(nextTerrain.sprite.texture)
       })
     })
@@ -73,12 +73,30 @@ export class SideScrollingWorld {
       return SpriteUtils.intersect(actionSprite.sprite, terrain.sprite)
     })
 
-    if (terrainCollisions.length === 0) {
+
+    // if the sprite isn't falling start it falling
+    if (terrainCollisions.length === 0 && !actionSprite.falling) {
+      console.log('world: start falling')
+      const { x, y } = actionSprite.sprite
+      actionSprite.fallSpeed = 1
+      actionSprite.falling = true
+      actionSprite.fallTracker = {
+        start: {
+          x,
+          y,
+        },
+      }
+    } else {
+      const bottomCollision = terrainCollisions.find((collisionSprite) => {
+        return collisionSprite.top === actionSprite.bottom
+      })
+      if (actionSprite.falling && bottomCollision) {
+        actionSprite.land()
+      }
       // TODO: this would be multiplied by a decimal viscosity if in a permiable terrain like water or gel
       // this would also be cool if the sprite had a "resistance" that could make it fall slower
-      actionSprite.fall(1)
-    } else {
-      actionSprite.collide(terrainCollisions)
+      // that could be handled here
+      
     }
 
 

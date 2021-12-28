@@ -1,6 +1,6 @@
-import { Application, AnimatedSprite, utils, Rectangle } from 'pixi.js'
-import { ControllablleSprite } from './sprites/controllableSprite';
-import { SideScrollingWorld } from './world/SideScrollingWorld';
+import { Application } from 'pixi.js'
+import { ControllableSprite } from './sprites/controllableSprite'
+import { SideScrollingWorld } from './world/SideScrollingWorld'
 
 const DEFAULT_GRAVITY = 10
 //Create a Pixi Application
@@ -16,7 +16,7 @@ loader
   .load(setup);
 let id
 let terrainId
-let controllableDomo: ControllablleSprite
+let controllableDomo: ControllableSprite
 let world: SideScrollingWorld
 
 function setup() {
@@ -43,7 +43,7 @@ function setup() {
     const walk5 = id['walk5.png']
     const walk6 = id['walk6.png']
     const walkLeft = [walk4, walk5, walk6]
-    controllableDomo = new ControllablleSprite(walkRight, walkLeft, window, 1)
+    controllableDomo = new ControllableSprite(walkRight, walkLeft, window, 1)
 
     controllableDomo.listen()
     controllableDomo.sprite.animationSpeed = .1

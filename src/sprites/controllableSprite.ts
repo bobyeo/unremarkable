@@ -1,9 +1,12 @@
 import { AnimatedSprite, Resource, Texture } from 'pixi.js'
+import { OutlineFilter } from 'pixi-filters'
 import { Key } from '../control/key';
 import { TerrainSprite } from './terrainSprite';
+import { BaseSprite } from './baseSprite';
 
-export type ActionSprite = ControllablleSprite
+export type ActionSprite = ControllableSprite
 export type CollidableSprite = TerrainSprite // || controllable sprite?
+
 export interface IFallTracker {
   start: {
     x: number,
@@ -11,15 +14,17 @@ export interface IFallTracker {
   }
 }
 
-export class ControllablleSprite {
+export class ControllableSprite extends BaseSprite {
   public sprite: AnimatedSprite
+  public falling: boolean = false
+  private log: boolean = true
+  public fallSpeed = 1
+  public fallTracker: IFallTracker | undefined
   private left: Key
   private right: Key
   private up: Key
   private down: Key
-  private falling: IFallTracker | undefined
-  private jumping: boolean = false
-  private currentDelta: number | undefined
+  private jumping: boolean = true
 
   constructor(
     private moveRightTextures: Texture<Resource>[],
@@ -28,23 +33,25 @@ export class ControllablleSprite {
     private stepSize: number = 15,
     private jumpSpeed: number = -5
     ){
-    this.sprite = new AnimatedSprite(this.moveRightTextures)
+    super(new AnimatedSprite(moveRightTextures))
+    this.sprite = this._sprite as AnimatedSprite // FIXME: this is just for casting. Figure out better typing
     this.sprite.loop = true
 
     this.left = new Key('ArrowLeft', this.window, true, this.animateWalkLeft.bind(this), this.stopAnimation.bind(this))
     this.right = new Key('ArrowRight', this.window, true, this.animateWalkRight.bind(this), this.stopAnimation.bind(this))
     this.down = new Key('ArrowDown', this.window)
-    this.up = new Key('ArrowUp', this.window, true, this.handleJump.bind(this, this.currentDelta))
+    this.up = new Key('ArrowUp', this.window, true, this.handleJump.bind(this))
 
     this.listen()
   }
   
   public tick (delta: number) {
-    this.currentDelta = delta
+    if (this.falling) {
+      this.fall(this.fallSpeed)
+    }
     this.rightTick()
     this.leftTick()
-    this.downTick()
-    this.upTick()
+    // this.downTick()
   }
   
   public listen () {
@@ -61,36 +68,15 @@ export class ControllablleSprite {
     this.up.unsubscribe()
   }
 
-  public fall(distance: number) {
-    if (this.falling === undefined) {
-      const { x, y } = this.sprite
-      this.falling = {
-        start: {
-          x,
-          y,
-        },
-      }
-    }
+  private fall(distance: number) {
     this.moveSpriteDownwards(distance)
   }
 
-  public collide(collisionSprites: CollidableSprite[]) {
-    collisionSprites.forEach((collisionSprite) => {
-      if(this.falling !== undefined && (collisionSprite.sprite.y === this.sprite.y)) {
-        this.land(this.sprite.y - this.falling.start.y)
-      }
-    })
-    //if fall && collision is with terrain && collsion is "landing" (not side hit) {
- // should turn off fall
- // should calculate the distance 
- // should call land and pass in the distance fallen
-//    }
-// TODO: figure out logic for colliding with projectiles enemy/friendly, enemies, friends, etc
-  }
-
-  private land(distanceFallen: number) {
-    this.falling = undefined
-    console.log('Fell ', distanceFallen, ' many pixels')
+  public land() {
+    const distanceFallen = this.sprite.y - this.fallTracker!.start.y
+    this.falling = false
+    this.jumping = false
+    console.log('Fell ', distanceFallen, ' many pixels. Starting at: ', this.fallTracker?.start.y, ' and ending at: ', this.sprite.y)
     // if too far the call die
     // if not too far call stun
     // else run the "land" animation and go
@@ -105,13 +91,9 @@ export class ControllablleSprite {
     this.right.isDown && this.moveRight()
   }
 
-  private upTick () {
-    this.up.isDown &&  this.moveUp()
-  }
-
-  private downTick () {
-    this.down.isDown && this.moveDown()
-  }
+  // private downTick () {
+  //   this.down.isDown && this.moveDown()
+  // }
 
   private moveLeft () {
     this.sprite.x -= this.stepSize
@@ -121,29 +103,32 @@ export class ControllablleSprite {
     this.sprite.x += this.stepSize
   }
  
-  private moveUp () {
-    this.sprite.y -= this.stepSize
-  }
+  // private moveDown() {
+  //   this.moveSpriteDownwards(this.stepSize)
+  // }
 
-  private moveDown() {
-    this.moveSpriteDownwards(this.stepSize)
-  }
-
-  private handleJump(delta?: number) {
-    console.log('handling jump. delta: ', this.currentDelta)
-    this.jumping = true
-    this.jumpSpeed = -20
-    this.sprite.y += this.jumpSpeed * (delta || 1)
+  private handleJump() {
+    if(!this.jumping) {
+      // TODO: Animate jump
+      // TODO: add jumping sound
+      this.jumping = true
+      this.jumpSpeed = -20
+      this.sprite.y += this.jumpSpeed
+    }
   }
 
   private animateWalkRight() {
-    this.sprite.textures = this.moveRightTextures
-    this.sprite.play()
+    if (!this.jumping) {
+      this.sprite.textures = this.moveRightTextures
+      this.sprite.play()
+    }
   }
 
   private animateWalkLeft() {
-    this.sprite.textures = this.moveLeftTextures
-    this.sprite.play()
+    if (!this.jumping) {
+      this.sprite.textures = this.moveLeftTextures
+      this.sprite.play()
+    }
   }
 
   private stopAnimation() {

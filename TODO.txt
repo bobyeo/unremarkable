@@ -1,6 +1,2 @@
 Last left off at:
-Trying to figure out collision with child and ground. 
-need tofigure out why sprite is falling past the ground sprite.
-may just want the world to tell the sprite it landed
-
-* install jest and set up a test
+Get assets working in web pack dev server

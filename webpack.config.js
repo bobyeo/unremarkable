@@ -25,7 +25,10 @@ module.exports = {
   },
   output: {
     filename: 'unremarkable.js',
-    path: path.resolve(__dirname, 'public/js'),
+    path: path.resolve(__dirname, 'dist/src'),
+    // This line is VERY important for VS Code debugging to attach properly
+    // Tamper with it at your own risks
+    devtoolModuleFilenameTemplate: '[absolute-resource-path]',
   },
   plugins: [
     // No need to write a index.html
@@ -33,7 +36,7 @@ module.exports = {
     // Do not accumulate files in ./dist
     new CleanWebpackPlugin(),
     // Copy assets to serve them
-    new CopyPlugin({patterns: [{ from: 'images', to: 'src/images'}]}),
+    new CopyPlugin({patterns: [{ from: path.resolve(__dirname, './images'), to: path.resolve(__dirname, './dist/src/images')}]}),
   ],
   devServer: {
     // webpack-dev-server configuration
@@ -42,5 +45,9 @@ module.exports = {
     port: 3000,
     // Hot-reloading, the sole reason to use webpack here <3
     hot: true,
+    devMiddleware: {
+      writeToDisk: true,
+    },
 },
+mode: 'development'
 };

@@ -2,6 +2,7 @@ import { Resource, Texture } from "pixi.js";
 import { ActionSprite } from '../sprites/controllableSprite';
 import { TerrainSprite } from "../sprites/terrainSprite";
 import { SpriteUtils } from '../utils/sprite';
+import { Surroundings } from './Surroundings';
 
 export class SideScrollingWorld {
   public level: TerrainSprite[] = []
@@ -17,7 +18,7 @@ export class SideScrollingWorld {
   // Bottom right: window width, window height
   // Top right: window width, 0
   constructor(private terrainTextures: Texture<Resource>[], private worldMatrix: number[][], private window: Window & typeof globalThis, private gravity: number) {
-    // assume all terrain blocks are the same height
+    // assume all terrain blocks are the same height for now
     this.terrainRowHeight = this.terrainTextures[0].height
   }
 
@@ -70,6 +71,8 @@ export class SideScrollingWorld {
 
   public processSpriteInWorld(actionSprite: ActionSprite) {
     const terrainCollisions = this.level.filter((terrain) => {
+      // FIXME: for faster falling and blocking a jump this will need to filter 
+      // potential intersections as well.
       return SpriteUtils.intersect(actionSprite.sprite, terrain.sprite)
     })
 
@@ -87,16 +90,11 @@ export class SideScrollingWorld {
         },
       }
     } else {
-      const bottomCollision = terrainCollisions.find((collisionSprite) => {
-        return collisionSprite.top === actionSprite.bottom
-      })
-      if (actionSprite.falling && bottomCollision) {
+      const actionSpriteSurroundings = new Surroundings(actionSprite, terrainCollisions)
+
+      if (actionSprite.falling && actionSpriteSurroundings.below.length > 0) { // && the terrain speed multiple is 0 <-- future enhancement for 
         actionSprite.land()
       }
-      // TODO: this would be multiplied by a decimal viscosity if in a permiable terrain like water or gel
-      // this would also be cool if the sprite had a "resistance" that could make it fall slower
-      // that could be handled here
-      
     }
 
 

@@ -1,2 +1,7 @@
+TODO:
+* implement stopping when running into side of something
+* implement stopping when hitting the bottom of something
+* implment faster falling gravity than 1. <<-- requires looking for future collisions
 Last left off at:
-Get assets working in web pack dev server
+Refactoring terrain collisions into a surroundings object.
+Need to add something like "stopRight" / "stopLeft" for the controllable sprite to stop it's movements.

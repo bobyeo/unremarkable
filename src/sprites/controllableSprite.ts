@@ -1,8 +1,8 @@
 import { AnimatedSprite, Resource, Texture } from 'pixi.js'
-import { OutlineFilter } from 'pixi-filters'
 import { Key } from '../control/key';
 import { TerrainSprite } from './terrainSprite';
 import { BaseSprite } from './baseSprite';
+import { Surroundings } from '../world/Surroundings';
 
 export type ActionSprite = ControllableSprite
 export type CollidableSprite = TerrainSprite // || controllable sprite?
@@ -17,13 +17,13 @@ export interface IFallTracker {
 export class ControllableSprite extends BaseSprite {
   public sprite: AnimatedSprite
   public falling: boolean = false
-  private log: boolean = true
+  public moving: boolean = false
   public fallSpeed = 1
   public fallTracker: IFallTracker | undefined
-  private left: Key
-  private right: Key
-  private up: Key
-  private down: Key
+  private leftKey: Key
+  private rightKey: Key
+  private upKey: Key
+  private downKey: Key
   private jumping: boolean = true
 
   constructor(
@@ -37,10 +37,10 @@ export class ControllableSprite extends BaseSprite {
     this.sprite = this._sprite as AnimatedSprite // FIXME: this is just for casting. Figure out better typing
     this.sprite.loop = true
 
-    this.left = new Key('ArrowLeft', this.window, true, this.animateWalkLeft.bind(this), this.stopAnimation.bind(this))
-    this.right = new Key('ArrowRight', this.window, true, this.animateWalkRight.bind(this), this.stopAnimation.bind(this))
-    this.down = new Key('ArrowDown', this.window)
-    this.up = new Key('ArrowUp', this.window, true, this.handleJump.bind(this))
+    this.leftKey = new Key('ArrowLeft', this.window, true, this.animateWalkLeft.bind(this), this.stopAnimation.bind(this))
+    this.rightKey = new Key('ArrowRight', this.window, true, this.animateWalkRight.bind(this), this.stopAnimation.bind(this))
+    this.downKey = new Key('ArrowDown', this.window)
+    this.upKey = new Key('ArrowUp', this.window, true, this.handleJump.bind(this))
 
     this.listen()
   }
@@ -55,17 +55,17 @@ export class ControllableSprite extends BaseSprite {
   }
   
   public listen () {
-    this.right.subscribe()
-    this.left.subscribe()
-    this.down.subscribe()
-    this.up.subscribe()
+    this.rightKey.subscribe()
+    this.leftKey.subscribe()
+    this.downKey.subscribe()
+    this.upKey.subscribe()
   }
 
   public ignore () {
-    this.right.unsubscribe()
-    this.left.unsubscribe()
-    this.down.unsubscribe()
-    this.up.unsubscribe()
+    this.rightKey.unsubscribe()
+    this.leftKey.unsubscribe()
+    this.downKey.unsubscribe()
+    this.upKey.unsubscribe()
   }
 
   private fall(distance: number) {
@@ -82,13 +82,21 @@ export class ControllableSprite extends BaseSprite {
     // else run the "land" animation and go
   }
 
+  public stop() {
+    this.moving = false
+  }
+
+  public go() {
+    this.moving = true
+  }
+
 
   private leftTick () {
-    this.left.isDown && this.moveLeft()
+    this.leftKey.isDown && this.moveLeft()
   }
 
   private rightTick () {
-    this.right.isDown && this.moveRight()
+    this.rightKey.isDown && this.moveRight()
   }
 
   // private downTick () {

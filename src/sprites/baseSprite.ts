@@ -10,4 +10,12 @@ export class BaseSprite {
   public get bottom(): number{
     return (this._sprite.y + this._sprite.height)
   }
+
+  public get right(): number{
+    return (this._sprite.x + this._sprite.width)
+  }
+
+  public get left(): number{
+    return this._sprite.x
+  }
 }

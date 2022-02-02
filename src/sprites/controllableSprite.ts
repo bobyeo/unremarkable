@@ -24,14 +24,14 @@ export class ControllableSprite extends BaseSprite {
   private rightKey: Key
   private upKey: Key
   private downKey: Key
-  private jumping: boolean = true
+  public jumping: boolean = true
 
   constructor(
     private moveRightTextures: Texture<Resource>[],
     private moveLeftTextures: Texture<Resource>[],
     private window: Window & typeof globalThis,
-    private stepSize: number = 15,
-    private jumpSpeed: number = -5
+    public stepSize: number = 15,
+    public jumpSpeed: number = -25
     ){
     super(new AnimatedSprite(moveRightTextures))
     this.sprite = this._sprite as AnimatedSprite // FIXME: this is just for casting. Figure out better typing
@@ -120,8 +120,8 @@ export class ControllableSprite extends BaseSprite {
       // TODO: Animate jump
       // TODO: add jumping sound
       this.jumping = true
-      this.jumpSpeed = -20
-      this.sprite.y += this.jumpSpeed
+      // this.jumpSpeed = -20
+      // this.sprite.y += this.jumpSpeed
     }
   }
 
@@ -145,5 +145,9 @@ export class ControllableSprite extends BaseSprite {
 
   private moveSpriteDownwards(steps: number) {
     this.sprite.y += steps
+  }
+
+  public moveSpriteUpwards(steps: number) {
+    this.sprite.y -= steps
   }
 }

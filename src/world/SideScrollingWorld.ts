@@ -95,6 +95,16 @@ export class SideScrollingWorld {
       if (actionSprite.falling && actionSpriteSurroundings.below.length > 0) { // && the terrain speed multiple is 0 <-- future enhancement for 
         actionSprite.land()
       }
+
+      if (actionSprite.jumping && actionSpriteSurroundings.above.length > 0) { // && the terrain speed multiple is 0 <-- future enhancement for 
+        // then only move as far as the bottom of the one above
+        // get lowest bottom above:
+        const ceiling = Math.max(...actionSpriteSurroundings.above.map((sprite) => sprite.bottom))
+        const maxMove = actionSprite.top + actionSprite.jumpSpeed
+        maxMove < ceiling ? actionSprite.moveSpriteUpwards(maxMove) : actionSprite.moveSpriteUpwards(ceiling)
+      } else {
+
+      }
     }
 
 

@@ -73,7 +73,7 @@ export class SideScrollingWorld {
     const terrainCollisions = this.level.filter((terrain) => {
       // FIXME: for faster falling and blocking a jump this will need to filter 
       // potential intersections as well.
-      return SpriteUtils.intersect(actionSprite.sprite, terrain.sprite)
+      return SpriteUtils.isColliding(actionSprite.sprite, terrain.sprite)
     })
 
 

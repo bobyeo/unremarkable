@@ -18,4 +18,16 @@ export class BaseSprite {
   public get left(): number{
     return this._sprite.x
   }
+
+  public isAbove(sprite: BaseSprite) {
+    return this.top > sprite.bottom
+  }
+
+  public isBelow(sprite: BaseSprite) {
+    return this.top > sprite.bottom
+  }
+
+  public isBelowPixel(y: number) {
+    return this.top > y
+  }
 }

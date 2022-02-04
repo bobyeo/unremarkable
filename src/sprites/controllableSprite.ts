@@ -18,7 +18,6 @@ export class ControllableSprite extends BaseSprite {
   public sprite: AnimatedSprite
   public falling: boolean = false
   public moving: boolean = false
-  public fallSpeed = 1
   public fallTracker: IFallTracker | undefined
   private leftKey: Key
   private rightKey: Key
@@ -31,7 +30,8 @@ export class ControllableSprite extends BaseSprite {
     private moveLeftTextures: Texture<Resource>[],
     private window: Window & typeof globalThis,
     public stepSize: number = 15,
-    public jumpSpeed: number = -25
+    public jumpSpeed: number = -25,
+    public fallSpeed: number = 1
     ){
     super(new AnimatedSprite(moveRightTextures))
     this.sprite = this._sprite as AnimatedSprite // FIXME: this is just for casting. Figure out better typing

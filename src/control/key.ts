@@ -1,4 +1,3 @@
-
 export type ControlKey = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | ' ' | 'Space'
 export class Key {
   public isDown = false;
@@ -23,7 +22,7 @@ export class Key {
       this.isUp = false
       event.preventDefault()
     }
-  };
+  }
 
   private upHandler(event: KeyboardEvent) {
     if (event.key === this.key) {
@@ -34,19 +33,19 @@ export class Key {
       this.isUp = true
       event.preventDefault()
     }
-  };
+  }
 
   public unsubscribe() {
-    this.window.removeEventListener("keydown", this.downListener);
-    this.window.removeEventListener("keyup", this.upListener);
+    this.window.removeEventListener('keydown', this.downListener)
+    this.window.removeEventListener('keyup', this.upListener)
   }
 
   public subscribe() {
     window.addEventListener(
-      "keydown", this.downListener, false
-    );
+      'keydown', this.downListener, false
+    )
     window.addEventListener(
-      "keyup", this.upListener, false
+      'keyup', this.upListener, false
     )
   }
 }

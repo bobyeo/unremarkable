@@ -1,12 +1,4 @@
 TODO:
-* refactor jump into the sprite setting a bool for intention to jump and the world then calculating the jump based on surroundings.
-
-
-* implement stopping when running into side of something
-* implement stopping when hitting the bottom of something
-* implment faster falling gravity than 1. <<-- requires looking for future collisions
 
 Last left off at:
-Adding a test for detecting possible collisions. There are failures due to setup -- "hitsTop" is always firing true when not testing for it
-Refactoring terrain collisions into a surroundings object.
-Need to add something like "stopRight" / "stopLeft" for the controllable sprite to stop it's movements.
+reading polygon collision algos

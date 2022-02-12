@@ -1,11 +1,7 @@
 import { AnimatedSprite, Resource, Texture } from 'pixi.js'
-import { Key } from '../control/key';
-import { TerrainSprite } from './terrainSprite';
-import { BaseSprite } from './baseSprite';
-import { Surroundings } from '../world/Surroundings';
-
-export type ActionSprite = ControllableSprite
-export type CollidableSprite = TerrainSprite // || controllable sprite?
+import { Key } from '../control/key'
+import { TerrainSprite } from './terrainSprite'
+import ActionSprite from './actionSprite'
 
 export interface IFallTracker {
   start: {
@@ -14,27 +10,26 @@ export interface IFallTracker {
   }
 }
 
-export class ControllableSprite extends BaseSprite {
+export class ControllableSprite extends ActionSprite {
   public sprite: AnimatedSprite
-  public falling: boolean = false
-  public moving: boolean = false
   public fallTracker: IFallTracker | undefined
   private leftKey: Key
   private rightKey: Key
   private upKey: Key
   private downKey: Key
-  public jumping: boolean = true
+  public jumping: boolean = false
 
   constructor(
-    private moveRightTextures: Texture<Resource>[],
-    private moveLeftTextures: Texture<Resource>[],
+    moveRightTextures: Texture<Resource>[],
+    moveLeftTextures: Texture<Resource>[],
     private window: Window & typeof globalThis,
-    public stepSize: number = 15,
-    public jumpSpeed: number = -25,
-    public fallSpeed: number = 1
-    ){
-    super(new AnimatedSprite(moveRightTextures))
-    this.sprite = this._sprite as AnimatedSprite // FIXME: this is just for casting. Figure out better typing
+    stepSize: number = 15,
+    jumpSpeed: number = -25,
+    fallSpeed: number = 2,
+  ) {
+    super(moveRightTextures, moveLeftTextures, stepSize, jumpSpeed, fallSpeed)
+    // FIXME: this is just for casting. Figure out better typing
+    this.sprite = this._sprite as AnimatedSprite
     this.sprite.loop = true
 
     this.leftKey = new Key('ArrowLeft', this.window, true, this.animateWalkLeft.bind(this), this.stopAnimation.bind(this))
@@ -44,8 +39,8 @@ export class ControllableSprite extends BaseSprite {
 
     this.listen()
   }
-  
-  public tick (delta: number) {
+
+  public tick(delta: number) {
     if (this.falling) {
       this.fall(this.fallSpeed)
     }
@@ -53,15 +48,15 @@ export class ControllableSprite extends BaseSprite {
     this.leftTick()
     // this.downTick()
   }
-  
-  public listen () {
+
+  public listen() {
     this.rightKey.subscribe()
     this.leftKey.subscribe()
     this.downKey.subscribe()
     this.upKey.subscribe()
   }
 
-  public ignore () {
+  public ignore() {
     this.rightKey.unsubscribe()
     this.leftKey.unsubscribe()
     this.downKey.unsubscribe()
@@ -73,50 +68,20 @@ export class ControllableSprite extends BaseSprite {
   }
 
   public land() {
-    const distanceFallen = this.sprite.y - this.fallTracker!.start.y
     this.falling = false
     this.jumping = false
-    console.log('Fell ', distanceFallen, ' many pixels. Starting at: ', this.fallTracker?.start.y, ' and ending at: ', this.sprite.y)
-    // if too far the call die
-    // if not too far call stun
-    // else run the "land" animation and go
   }
 
-  public stop() {
-    this.moving = false
+  private leftTick() {
+    this.tryMoveLeft = this.leftKey.isDown
   }
 
-  public go() {
-    this.moving = true
+  private rightTick() {
+    this.tryMoveRight = this.rightKey.isDown
   }
-
-
-  private leftTick () {
-    this.leftKey.isDown && this.moveLeft()
-  }
-
-  private rightTick () {
-    this.rightKey.isDown && this.moveRight()
-  }
-
-  // private downTick () {
-  //   this.down.isDown && this.moveDown()
-  // }
-
-  private moveLeft () {
-    this.sprite.x -= this.stepSize
-  }
-
-  private moveRight () {
-    this.sprite.x += this.stepSize
-  }
- 
-  // private moveDown() {
-  //   this.moveSpriteDownwards(this.stepSize)
-  // }
 
   private handleJump() {
-    if(!this.jumping) {
+    if (!this.jumping) {
       // TODO: Animate jump
       // TODO: add jumping sound
       this.jumping = true
@@ -126,14 +91,14 @@ export class ControllableSprite extends BaseSprite {
   }
 
   private animateWalkRight() {
-    if (!this.jumping) {
+    if (!this.jumping && !this.sprite.playing) {
       this.sprite.textures = this.moveRightTextures
       this.sprite.play()
     }
   }
 
   private animateWalkLeft() {
-    if (!this.jumping) {
+    if (!this.jumping && !this.sprite.playing) {
       this.sprite.textures = this.moveLeftTextures
       this.sprite.play()
     }
@@ -146,8 +111,6 @@ export class ControllableSprite extends BaseSprite {
   private moveSpriteDownwards(steps: number) {
     this.sprite.y += steps
   }
-
-  public moveSpriteUpwards(steps: number) {
-    this.sprite.y -= steps
-  }
 }
+
+export type CollidableSprite = TerrainSprite // || controllable sprite?

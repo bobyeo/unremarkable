@@ -1,16 +1,17 @@
-import { Resource, Texture } from "pixi.js";
-import { ActionSprite } from '../sprites/controllableSprite';
-import { TerrainSprite } from "../sprites/terrainSprite";
-import { SpriteUtils } from '../utils/sprite';
-import { Surroundings } from './Surroundings';
+import { System } from 'detect-collisions'
+import { Resource, systems, Texture } from 'pixi.js'
+import { ControllableSprite } from '../sprites/controllableSprite'
+import { TerrainSprite } from '../sprites/terrainSprite'
 
+type CollisionDirection = 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT'
 export class SideScrollingWorld {
   public level: TerrainSprite[] = []
-  public readonly animatedSprites: ActionSprite[] = []
+  public readonly animatedSprites: ControllableSprite[] = []
   private terrainPlacementCursorX = 0
   private terrainPlacementCursorY = this.window.innerHeight
   private readonly initWorldHeight = this.window.innerHeight
   private terrainRowHeight = 0
+  private trackingSystem: System
 
   // NOTE: World coordinates: 
   // Upper left: 0,0
@@ -20,6 +21,7 @@ export class SideScrollingWorld {
   constructor(private terrainTextures: Texture<Resource>[], private worldMatrix: number[][], private window: Window & typeof globalThis, private gravity: number) {
     // assume all terrain blocks are the same height for now
     this.terrainRowHeight = this.terrainTextures[0].height
+    this.trackingSystem = new System()
   }
 
   private placeNext(spriteIndex: number, row: number, column: number) {
@@ -27,6 +29,7 @@ export class SideScrollingWorld {
     nextTerrain.sprite.x = this.terrainPlacementCursorX
     nextTerrain.sprite.y = this.terrainPlacementCursorY
     this.level.push(nextTerrain)
+    this.trackingSystem.insert(nextTerrain.polygon)
     return nextTerrain
   }
 
@@ -37,14 +40,6 @@ export class SideScrollingWorld {
 
   private updateCursorForColumn(terrain: Texture<Resource>) {
     this.terrainPlacementCursorX += terrain.width
-  }
-
-  private get maxRows() {
-    return Math.floor(this.initWorldHeight / this.terrainRowHeight)
-  }
-
-  private getRowByYCoordinate(y: number) {
-    return Math.floor(y / this.maxRows)
   }
 
   // [[0,0,0,0,0,0,0],[1,1,1,1,1,1,1]]
@@ -58,103 +53,71 @@ export class SideScrollingWorld {
     })
   }
 
-  public addAnimatedSprite(sprite: ActionSprite) {
+  public addAnimatedSprite(sprite: ControllableSprite) {
     this.animatedSprites.push(sprite)
+    this.trackingSystem.insert(sprite.polygon)
   }
 
   public tick(delta: number) {
-    this.animatedSprites.forEach((sprite: ActionSprite) => {
-      this.processSpriteInWorld(sprite)
+    this.animatedSprites.forEach((sprite: ControllableSprite) => {
+      this.processSpriteInWorld(sprite, delta)
       sprite.tick(delta)
     })
   }
 
-  public processSpriteInWorld(actionSprite: ActionSprite) {
-    const terrainCollisions = this.level.filter((terrain) => {
-      // FIXME: for faster falling and blocking a jump this will need to filter 
-      // potential intersections as well.
-      return SpriteUtils.isColliding(actionSprite.sprite, terrain.sprite)
-    })
-
-
-    // if the sprite isn't falling start it falling
-    if (terrainCollisions.length === 0 && !actionSprite.falling) {
-      console.log('world: start falling')
-      const { x, y } = actionSprite.sprite
-      actionSprite.fallSpeed = 1
-      actionSprite.falling = true
-      actionSprite.fallTracker = {
-        start: {
-          x,
-          y,
-        },
-      }
-    } else {
-      const actionSpriteSurroundings = new Surroundings(actionSprite, terrainCollisions)
-
-      if (actionSprite.falling && actionSpriteSurroundings.below.length > 0) { // && the terrain speed multiple is 0 <-- future enhancement for 
-        actionSprite.land()
-      }
-
-      if (actionSprite.jumping && actionSpriteSurroundings.above.length > 0) { // && the terrain speed multiple is 0 <-- future enhancement for 
-        // then only move as far as the bottom of the one above
-        // get lowest bottom above:
-        const ceiling = Math.max(...actionSpriteSurroundings.above.map((sprite) => sprite.bottom))
-        const maxMove = actionSprite.top + actionSprite.jumpSpeed
-        maxMove < ceiling ? actionSprite.moveSpriteUpwards(maxMove) : actionSprite.moveSpriteUpwards(ceiling)
-      } else {
-
-      }
+  private processCollision(actionSprite: ControllableSprite, response: SAT.Response) {
+    switch(this.getCollisionDirectionFromSystemResponse(response)) {
+      case 'BOTTOM':
+        actionSprite.falling = false
+        break
+      case 'TOP':
+        break 
+      case 'LEFT':
+        break 
+      case 'RIGHT':
+        break 
     }
-
-
-    // =================== This should all be considered -- adding code above now though ======================
-    // I think here if the sprite is in no terrain, or a "permiable" terrain, then it should call fall() on the 
-    // controllable sprite and pass in the terrain it's falling through as a param.
-    // the controllable sprite can animate accordingly, change speed accordingly, it can track when it started falling
-    // if the sprite is hitting a non permiable object, then we can call "collide" on the controllable sprite
-    // and pass in the terrain and direction of the collision. That way if we're falling and we collide with something below
-    // us we can stop falling, see how far we fell (are we dead?), and animate accordingly.
-
-
-    // another thing to consider -- who tracks all the animated sprites like enemies and projectiles
-    // this should likely be private and be called by tick which is public.
-    // tick could then itterate through all the animated sprites calling this function which
-    // would compare the passed in sprite against the other animated sprites:
-    // e.g. projectile sprite animates into a rock, or into an enemy
-    // this brings up the question of order of processing -- 
-    // that is you process the player against the other animations
-    // then you process an enemy against the player? Is that beneficial?
-    // or do you only process with the animated sprite below you in the stack? <<---- this seems correct
-    /*
-    public Update(delta: number)
-{
-  if (this.sprite.y >= GameApp.GroundPosition) {
-    // if downward acceleration brought us to the ground,
-    // stop and set airborne to false
-    this.sprite.y = GameApp.GroundPosition;
-    this.verticalSpeed = 0;
-    this.airborne = false;
+    actionSprite.sprite.x -= response.overlapV.x
+    actionSprite.polygon.pos.x = actionSprite.sprite.x
+    actionSprite.sprite.y -= response.overlapV.y
+    actionSprite.polygon.pos.y = actionSprite.sprite.y
   }
 
-  if (this.airborne) {
-    // if we are in the air, accelerate downward
-    // by increasing the velocity by a constant value
-    this.verticalSpeed += delta* 1/3;
+  // TODO: determine what effect it has to prefer vertical hits to horizontal
+  private getCollisionDirectionFromSystemResponse(response: SAT.Response): CollisionDirection {
+    if (response.overlapV.y > 0) {
+      return 'BOTTOM'
+    }
+    if (response.overlapV.y < 0) {
+      return 'TOP'
+    }
+    if (response.overlapV.x < 0) {
+      return 'LEFT'
+    }
+    return 'RIGHT'
   }
 
-  if (GameApp.PressedSpace && !this.airborne) {
-    // jump!
-    this.airborne = true;
-    this.verticalSpeed = -5;
-  }
-
-  // remember the delta update!
-  // the position will change in accordance to
-  // how much time passed and the character's speed
-  this.sprite.y += this.verticalSpeed * delta;
-}
-    */
-    return this.getRowByYCoordinate(actionSprite.sprite.y)
+  public processSpriteInWorld(actionSprite: ControllableSprite, delta: number) {
+    const calculate = actionSprite.falling || actionSprite.tryJump || actionSprite.tryMoveLeft || actionSprite.tryMoveRight
+    if (calculate) {
+      const x = actionSprite.potentialHorizontalMovement
+      const y = actionSprite.potentialVerticalMovement
+      actionSprite.polygon.setPosition(x, y)
+      this.trackingSystem.update()
+      this.trackingSystem.getPotentials(actionSprite.polygon).forEach((potentialCollider) => {
+        if (this.trackingSystem.checkCollision(actionSprite.polygon, potentialCollider)) {
+          if (this.trackingSystem.response.a.tag === 'action') {
+            if (this.trackingSystem.response.overlap) {
+              this.processCollision(actionSprite, this.trackingSystem.response)
+              this.trackingSystem.update()
+            } else {
+              actionSprite.sprite.x = x
+              actionSprite.sprite.y = y
+              actionSprite.falling = true
+            }
+          }
+        }
+      })
+    }
   }
 }

@@ -1,4 +1,5 @@
 TODO:
+Why can't we move as we fall?
+Stop falling if off screen
+The world should control fall speed and movements not the sprite
 
-Last left off at:
-reading polygon collision algos

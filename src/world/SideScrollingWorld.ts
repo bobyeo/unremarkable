@@ -1,16 +1,19 @@
 import { System } from 'detect-collisions'
-import { Resource, systems, Texture } from 'pixi.js'
+import { Resource, Texture } from 'pixi.js'
 import { ControllableSprite } from '../sprites/controllableSprite'
 import { TerrainSprite } from '../sprites/terrainSprite'
 
-type CollisionDirection = 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT'
+interface ICollisionDirections {
+  top: boolean,
+  bottom: boolean,
+  right: boolean,
+  left: boolean
+}
 export class SideScrollingWorld {
   public level: TerrainSprite[] = []
   public readonly animatedSprites: ControllableSprite[] = []
   private terrainPlacementCursorX = 0
   private terrainPlacementCursorY = this.window.innerHeight
-  private readonly initWorldHeight = this.window.innerHeight
-  private terrainRowHeight = 0
   private trackingSystem: System
 
   // NOTE: World coordinates: 
@@ -19,8 +22,6 @@ export class SideScrollingWorld {
   // Bottom right: window width, window height
   // Top right: window width, 0
   constructor(private terrainTextures: Texture<Resource>[], private worldMatrix: number[][], private window: Window & typeof globalThis, private gravity: number) {
-    // assume all terrain blocks are the same height for now
-    this.terrainRowHeight = this.terrainTextures[0].height
     this.trackingSystem = new System()
   }
 
@@ -66,35 +67,48 @@ export class SideScrollingWorld {
   }
 
   private processCollision(actionSprite: ControllableSprite, response: SAT.Response) {
-    switch(this.getCollisionDirectionFromSystemResponse(response)) {
-      case 'BOTTOM':
-        actionSprite.falling = false
-        break
-      case 'TOP':
-        break 
-      case 'LEFT':
-        break 
-      case 'RIGHT':
-        break 
+    const collisionDrections = this.getCollisionDirectionFromSystemResponse(response)
+    // process horizontal attempt -- you can't move both left and right
+    if (actionSprite.tryMoveRight) {
+      actionSprite.sprite.x = collisionDrections.right ? (actionSprite.sprite.x - response.overlapV.x) : actionSprite.potentialHorizontalMovement
+    } else if (actionSprite.tryMoveLeft) {
+      actionSprite.sprite.x = collisionDrections.left ? (actionSprite.sprite.x - response.overlapV.x) : actionSprite.potentialHorizontalMovement
     }
-    actionSprite.sprite.x -= response.overlapV.x
+
+    // process jump attempt -- does the world physics allow jumping when you're falling? should this be an else if with landing
+    if(actionSprite.tryJump) {
+      actionSprite.sprite.y = collisionDrections.top ? (actionSprite.sprite.y - response.overlapV.y - 1) : actionSprite.potentialVerticalMovement
+    }
+
+    //process landing
+    if(collisionDrections.bottom) {
+      actionSprite.sprite.y -= response.overlapV.y - 1
+      actionSprite.falling = false
+    }
     actionSprite.polygon.pos.x = actionSprite.sprite.x
-    actionSprite.sprite.y -= response.overlapV.y
     actionSprite.polygon.pos.y = actionSprite.sprite.y
   }
 
-  // TODO: determine what effect it has to prefer vertical hits to horizontal
-  private getCollisionDirectionFromSystemResponse(response: SAT.Response): CollisionDirection {
-    if (response.overlapV.y > 0) {
-      return 'BOTTOM'
+  private getCollisionDirectionFromSystemResponse(response: SAT.Response): ICollisionDirections {
+    const collisionDirections = {
+      top: false,
+      bottom: false,
+      right: false,
+      left: false,
     }
-    if (response.overlapV.y < 0) {
-      return 'TOP'
+    if (response.overlapV.y > 1) {
+      collisionDirections.bottom = true
     }
-    if (response.overlapV.x < 0) {
-      return 'LEFT'
+    if (response.overlapV.y < -1) {
+      collisionDirections.top = true
     }
-    return 'RIGHT'
+    if (response.overlapV.x < -1) {
+      collisionDirections.left = true
+    }
+    if (response.overlapV.x > 1) {
+      collisionDirections.right = true
+    }
+    return collisionDirections
   }
 
   public processSpriteInWorld(actionSprite: ControllableSprite, delta: number) {
@@ -104,9 +118,10 @@ export class SideScrollingWorld {
       const y = actionSprite.potentialVerticalMovement
       actionSprite.polygon.setPosition(x, y)
       this.trackingSystem.update()
-      this.trackingSystem.getPotentials(actionSprite.polygon).forEach((potentialCollider) => {
-        if (this.trackingSystem.checkCollision(actionSprite.polygon, potentialCollider)) {
-          if (this.trackingSystem.response.a.tag === 'action') {
+      const potentials = this.trackingSystem.getPotentials(actionSprite.polygon)
+      if (potentials.length > 0) {
+        potentials.forEach((potentialCollider) => {
+          if (this.trackingSystem.checkCollision(actionSprite.polygon, potentialCollider)) {
             if (this.trackingSystem.response.overlap) {
               this.processCollision(actionSprite, this.trackingSystem.response)
               this.trackingSystem.update()
@@ -115,9 +130,13 @@ export class SideScrollingWorld {
               actionSprite.sprite.y = y
               actionSprite.falling = true
             }
-          }
-        }
-      })
+          } 
+        })
+      } else {
+        actionSprite.sprite.x = x
+        actionSprite.sprite.y = y
+        actionSprite.falling = true
+      }
     }
   }
 }

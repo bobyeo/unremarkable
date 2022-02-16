@@ -23,7 +23,7 @@ export class ControllableSprite extends ActionSprite {
     moveRightTextures: Texture<Resource>[],
     moveLeftTextures: Texture<Resource>[],
     private window: Window & typeof globalThis,
-    stepSize: number = 15,
+    stepSize: number = 5,
     jumpSpeed: number = -25,
     fallSpeed: number = 2,
   ) {
@@ -41,12 +41,8 @@ export class ControllableSprite extends ActionSprite {
   }
 
   public tick(delta: number) {
-    if (this.falling) {
-      this.fall(this.fallSpeed)
-    }
     this.rightTick()
     this.leftTick()
-    // this.downTick()
   }
 
   public listen() {

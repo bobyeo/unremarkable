@@ -1,4 +1,4 @@
-import { System } from 'detect-collisions'
+import { System, TBody } from 'detect-collisions'
 import { Resource, Texture } from 'pixi.js'
 import { ControllableSprite } from '../sprites/controllableSprite'
 import { TerrainSprite } from '../sprites/terrainSprite'
@@ -8,6 +8,13 @@ interface ICollisionDirections {
   bottom: boolean,
   right: boolean,
   left: boolean
+}
+
+interface ICollisionOverlaps {
+  top?: number,
+  bottom?: number,
+  right?: number,
+  left?: number
 }
 export class SideScrollingWorld {
   public level: TerrainSprite[] = []
@@ -66,49 +73,44 @@ export class SideScrollingWorld {
     })
   }
 
-  private processCollision(actionSprite: ControllableSprite, response: SAT.Response) {
-    const collisionDrections = this.getCollisionDirectionFromSystemResponse(response)
+  private processCollisions(actionSprite: ControllableSprite, collisionOverlaps: ICollisionOverlaps) {
     // process horizontal attempt -- you can't move both left and right
     if (actionSprite.tryMoveRight) {
-      actionSprite.sprite.x = collisionDrections.right ? (actionSprite.sprite.x - response.overlapV.x) : actionSprite.potentialHorizontalMovement
+      actionSprite.sprite.x = collisionOverlaps.right ? (actionSprite.sprite.x - collisionOverlaps.right) : actionSprite.potentialHorizontalMovement
     } else if (actionSprite.tryMoveLeft) {
-      actionSprite.sprite.x = collisionDrections.left ? (actionSprite.sprite.x - response.overlapV.x) : actionSprite.potentialHorizontalMovement
+      actionSprite.sprite.x = collisionOverlaps.left ? (actionSprite.sprite.x - collisionOverlaps.left) : actionSprite.potentialHorizontalMovement
     }
 
     // process jump attempt -- does the world physics allow jumping when you're falling? should this be an else if with landing
     if(actionSprite.tryJump) {
-      actionSprite.sprite.y = collisionDrections.top ? (actionSprite.sprite.y - response.overlapV.y - 1) : actionSprite.potentialVerticalMovement
+      actionSprite.sprite.y = collisionOverlaps.top ? (actionSprite.sprite.y - collisionOverlaps.top - 1) : actionSprite.potentialVerticalMovement
+      actionSprite.jumping = true
     }
 
     //process landing
-    if(collisionDrections.bottom) {
-      actionSprite.sprite.y -= response.overlapV.y - 1
+    if(collisionOverlaps.bottom) {
+      actionSprite.sprite.y -= collisionOverlaps.bottom
       actionSprite.falling = false
+      actionSprite.jumping = false
     }
     actionSprite.polygon.pos.x = actionSprite.sprite.x
     actionSprite.polygon.pos.y = actionSprite.sprite.y
   }
 
-  private getCollisionDirectionFromSystemResponse(response: SAT.Response): ICollisionDirections {
-    const collisionDirections = {
-      top: false,
-      bottom: false,
-      right: false,
-      left: false,
-    }
+  private getCollisionOverlapsFromSystemResponse(response: SAT.Response, collisionOverlaps: ICollisionOverlaps): ICollisionOverlaps {
     if (response.overlapV.y > 1) {
-      collisionDirections.bottom = true
+      collisionOverlaps.bottom = Math.max(response.overlapV.y, collisionOverlaps.bottom || 0)
     }
     if (response.overlapV.y < -1) {
-      collisionDirections.top = true
+      collisionOverlaps.top = Math.min(response.overlapV.y, collisionOverlaps.top || 0)
     }
     if (response.overlapV.x < -1) {
-      collisionDirections.left = true
+      collisionOverlaps.left = Math.min(response.overlapV.x, collisionOverlaps.left || 0)
     }
     if (response.overlapV.x > 1) {
-      collisionDirections.right = true
+      collisionOverlaps.right = Math.max(response.overlapV.x, collisionOverlaps.right || 0)
     }
-    return collisionDirections
+    return collisionOverlaps
   }
 
   public processSpriteInWorld(actionSprite: ControllableSprite, delta: number) {
@@ -119,19 +121,17 @@ export class SideScrollingWorld {
       actionSprite.polygon.setPosition(x, y)
       this.trackingSystem.update()
       const potentials = this.trackingSystem.getPotentials(actionSprite.polygon)
-      if (potentials.length > 0) {
-        potentials.forEach((potentialCollider) => {
-          if (this.trackingSystem.checkCollision(actionSprite.polygon, potentialCollider)) {
-            if (this.trackingSystem.response.overlap) {
-              this.processCollision(actionSprite, this.trackingSystem.response)
-              this.trackingSystem.update()
-            } else {
-              actionSprite.sprite.x = x
-              actionSprite.sprite.y = y
-              actionSprite.falling = true
-            }
-          } 
-        })
+      const overlaps = potentials.reduce((overlap, potential) => {
+        if (this.trackingSystem.checkCollision(actionSprite.polygon, potential) && this.trackingSystem.response.overlap) {
+          return this.getCollisionOverlapsFromSystemResponse(this.trackingSystem.response, overlap)
+        }
+        return overlap
+      }, {} as ICollisionOverlaps)
+      const colliding = overlaps.left || overlaps.right || overlaps.top || overlaps.bottom
+
+      if (colliding) {
+        this.processCollisions(actionSprite, overlaps)
+        this.trackingSystem.update()
       } else {
         actionSprite.sprite.x = x
         actionSprite.sprite.y = y

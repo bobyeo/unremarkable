@@ -24,7 +24,7 @@ export class ControllableSprite extends ActionSprite {
     moveLeftTextures: Texture<Resource>[],
     private window: Window & typeof globalThis,
     stepSize: number = 5,
-    jumpSpeed: number = -25,
+    jumpSpeed: number = 25,
     fallSpeed: number = 2,
   ) {
     super(moveRightTextures, moveLeftTextures, stepSize, jumpSpeed, fallSpeed)
@@ -43,6 +43,7 @@ export class ControllableSprite extends ActionSprite {
   public tick(delta: number) {
     this.rightTick()
     this.leftTick()
+    this.upTick()
   }
 
   public listen() {
@@ -59,10 +60,6 @@ export class ControllableSprite extends ActionSprite {
     this.upKey.unsubscribe()
   }
 
-  private fall(distance: number) {
-    this.moveSpriteDownwards(distance)
-  }
-
   public land() {
     this.falling = false
     this.jumping = false
@@ -70,6 +67,10 @@ export class ControllableSprite extends ActionSprite {
 
   private leftTick() {
     this.tryMoveLeft = this.leftKey.isDown
+  }
+
+  private upTick() {
+    this.tryJump = this.upKey.isDown
   }
 
   private rightTick() {
@@ -80,9 +81,7 @@ export class ControllableSprite extends ActionSprite {
     if (!this.jumping) {
       // TODO: Animate jump
       // TODO: add jumping sound
-      this.jumping = true
-      // this.jumpSpeed = -20
-      // this.sprite.y += this.jumpSpeed
+      this.tryJump = true
     }
   }
 

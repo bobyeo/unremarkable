@@ -1,5 +1,4 @@
 TODO:
-Why can't we move as we fall?
+Clean up and refactor sprite
+Fix jitter when walking
 Stop falling if off screen
-The world should control fall speed and movements not the sprite
-

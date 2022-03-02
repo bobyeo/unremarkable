@@ -1,4 +1,5 @@
 TODO:
+Finish new physics conversion using SAT without state machine
 Clean up and refactor sprite
-Fix jitter when walking
 Stop falling if off screen
+Fall speed should be determined by the world not the sprite

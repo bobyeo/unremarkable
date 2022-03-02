@@ -39,7 +39,7 @@ export default class ActionSprite extends BaseSprite {
       this.falling = false
     }
     if (this.falling) {
-      y += this.fallSpeed 
+      y += (this.fallSpeed + 1) // FIXME: refactor this to indicate why we need to read ahead 1px
     } else if(this.tryJump) {
       y -= this.jumpSpeed
     }

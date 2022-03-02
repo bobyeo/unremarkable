@@ -89,12 +89,11 @@ export class SideScrollingWorld {
 
     //process landing
     if(collisionOverlaps.bottom) {
-      actionSprite.sprite.y -= collisionOverlaps.bottom
+      actionSprite.sprite.y -= (collisionOverlaps.bottom - 1)// FIXME:  refactor this so the falling lookahead 1px adjustment makes sense.
       actionSprite.falling = false
       actionSprite.jumping = false
     }
-    actionSprite.polygon.pos.x = actionSprite.sprite.x
-    actionSprite.polygon.pos.y = actionSprite.sprite.y
+    actionSprite.polygon.setPosition(actionSprite.sprite.x, actionSprite.sprite.y)
   }
 
   private getCollisionOverlapsFromSystemResponse(response: SAT.Response, collisionOverlaps: ICollisionOverlaps): ICollisionOverlaps {
@@ -118,15 +117,7 @@ export class SideScrollingWorld {
     if (calculate) {
       const x = actionSprite.potentialHorizontalMovement
       const y = actionSprite.potentialVerticalMovement
-      actionSprite.polygon.setPosition(x, y)
-      this.trackingSystem.update()
-      const potentials = this.trackingSystem.getPotentials(actionSprite.polygon)
-      const overlaps = potentials.reduce((overlap, potential) => {
-        if (this.trackingSystem.checkCollision(actionSprite.polygon, potential) && this.trackingSystem.response.overlap) {
-          return this.getCollisionOverlapsFromSystemResponse(this.trackingSystem.response, overlap)
-        }
-        return overlap
-      }, {} as ICollisionOverlaps)
+      const overlaps = this.getCollions(actionSprite, x, y)
       const colliding = overlaps.left || overlaps.right || overlaps.top || overlaps.bottom
 
       if (colliding) {
@@ -138,5 +129,17 @@ export class SideScrollingWorld {
         actionSprite.falling = true
       }
     }
+  }
+  
+  private getCollions(actionSprite: ControllableSprite, potentialX: number, potentialY: number): ICollisionOverlaps {
+    actionSprite.polygon.setPosition(potentialX, potentialY)
+    this.trackingSystem.update()
+    const potentials = this.trackingSystem.getPotentials(actionSprite.polygon)
+    return potentials.reduce((overlap, potential) => {
+      if (this.trackingSystem.checkCollision(actionSprite.polygon, potential) && this.trackingSystem.response.overlap) {
+        return this.getCollisionOverlapsFromSystemResponse(this.trackingSystem.response, overlap)
+      }
+      return overlap
+    }, {} as ICollisionOverlaps)
   }
 }
